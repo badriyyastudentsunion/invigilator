@@ -7,7 +7,9 @@ let invigilatorParticipants = [];
 let invigilatorReportedParticipants = new Set();
 let invigilatorCodeGenerated = false;
 let invigilatorParticipantCodes = {};
-let qrCodeScanner = null;
+let videoStream = null;
+let barcodeDetector = null;
+let scanningActive = false;
 
 // SVG Icons for Invigilator
 const invigilatorIcons = {
@@ -24,6 +26,10 @@ const invigilatorIcons = {
 async function renderInvigilatorApp(stageId, stageName) {
     invigilatorCurrentStageId = stageId;
     invigilatorCurrentStageName = stageName;
+    
+    // Initialize barcode detector
+    await initializeBarcodeDetector();
+    
     await loadInvigilatorData();
     
     const root = document.getElementById('invigilator-app');
@@ -39,6 +45,25 @@ async function renderInvigilatorApp(stageId, stageName) {
             </div>
         </div>
     `;
+}
+
+async function initializeBarcodeDetector() {
+    try {
+        if ('BarcodeDetector' in window) {
+            // Check if QR code format is supported
+            const supportedFormats = await BarcodeDetector.getSupportedFormats();
+            if (supportedFormats.includes('qr_code')) {
+                barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+                console.log('Built-in BarcodeDetector initialized');
+            } else {
+                console.log('QR codes not supported by built-in detector');
+            }
+        } else {
+            console.log('BarcodeDetector not available in this browser');
+        }
+    } catch (error) {
+        console.error('Error initializing barcode detector:', error);
+    }
 }
 
 async function loadInvigilatorData() {
@@ -231,7 +256,7 @@ function renderParticipantReporting() {
                     </p>
                 </div>
                 <div class="flex space-x-3">
-                    <button onclick="startQRScanning()" class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                    <button onclick="startDirectQRScanning()" class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
                         ${invigilatorIcons.scan}
                         <span class="ml-2">Scan QR</span>
                     </button>
@@ -362,62 +387,151 @@ function toggleParticipantReport(participantId) {
     document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
 }
 
-// Real QR Code Scanner Implementation
-async function startQRScanning() {
+// Direct Built-in QR Code Scanner
+async function startDirectQRScanning() {
     try {
-        const modal = document.getElementById('qrScannerModal');
-        modal.classList.remove('hidden');
-        
-        qrCodeScanner = new Html5QrcodeScanner("qr-scanner-container", {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0
-        });
-        
-        qrCodeScanner.render((decodedText, decodedResult) => {
-            console.log('QR Code scanned:', decodedText);
-            
-            // Find participant by decoded text (chess number or ID)
-            let foundParticipant = null;
-            
-            for (const participant of invigilatorParticipants) {
-                const chessNumber = invigilatorSelectedCompetition.is_group 
-                    ? `GROUP-${participant.id}` 
-                    : calculateChessNumber(participant).toString();
-                    
-                if (decodedText === chessNumber || decodedText === participant.id || decodedText.includes(participant.id)) {
-                    foundParticipant = participant;
-                    break;
-                }
-            }
-            
-            if (foundParticipant) {
-                invigilatorReportedParticipants.add(foundParticipant.id);
-                showAlert(`${foundParticipant.name || foundParticipant.representative_name} marked as reported`, 'success');
-                
-                // Stop scanning and close modal
-                stopQRScanning();
-                
-                // Refresh the main modal content
-                document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
-            } else {
-                showAlert('Participant not found for QR code: ' + decodedText, 'error');
-            }
-        }, (errorMessage) => {
-            // Parse error, ignore it for continuous scanning
-            console.log('QR scan error:', errorMessage);
-        });
-        
+        // First try to use built-in barcode detector with camera
+        if (barcodeDetector) {
+            await startBuiltInScanning();
+        } else {
+            // Fallback to manual input
+            await startManualInput();
+        }
     } catch (error) {
-        console.error('Error starting QR scanner:', error);
-        showAlert('Failed to start camera. Please check permissions.', 'error');
+        console.error('Error starting QR scanning:', error);
+        showAlert('Scanner not available. Please enter code manually.', 'error');
+        await startManualInput();
     }
 }
 
-function stopQRScanning() {
-    if (qrCodeScanner) {
-        qrCodeScanner.clear();
-        qrCodeScanner = null;
+async function startBuiltInScanning() {
+    try {
+        // Request camera access
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { 
+                facingMode: 'environment', // Use rear camera if available
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            }
+        });
+
+        // Create and show video element
+        const modal = document.getElementById('qrScannerModal');
+        const container = document.getElementById('qr-scanner-container');
+        
+        container.innerHTML = `
+            <video id="qr-video" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 8px;"></video>
+            <div class="mt-4 text-center">
+                <div id="scan-status" class="text-sm text-blue-600 mb-2">Position QR code in view</div>
+                <div class="flex justify-center space-x-3">
+                    <button onclick="stopDirectScanning()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                        Stop Scanning
+                    </button>
+                    <button onclick="startManualInput()" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                        Manual Input
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const video = document.getElementById('qr-video');
+        video.srcObject = videoStream;
+        
+        modal.classList.remove('hidden');
+        scanningActive = true;
+        
+        // Start scanning loop
+        await scanQRLoop(video);
+        
+    } catch (error) {
+        console.error('Camera access denied:', error);
+        showAlert('Camera access required for QR scanning', 'error');
+        await startManualInput();
+    }
+}
+
+async function scanQRLoop(video) {
+    if (!scanningActive || !barcodeDetector) return;
+    
+    try {
+        const barcodes = await barcodeDetector.detect(video);
+        
+        if (barcodes.length > 0) {
+            const qrData = barcodes[0].rawValue;
+            console.log('QR Code detected:', qrData);
+            
+            // Process the scanned QR code
+            await processScannedQR(qrData);
+            return;
+        }
+    } catch (error) {
+        // Ignore detection errors, continue scanning
+    }
+    
+    // Continue scanning
+    if (scanningActive) {
+        requestAnimationFrame(() => scanQRLoop(video));
+    }
+}
+
+async function processScannedQR(qrData) {
+    // Find participant by QR data
+    let foundParticipant = null;
+    
+    for (const participant of invigilatorParticipants) {
+        const chessNumber = invigilatorSelectedCompetition.is_group 
+            ? `GROUP-${participant.id}` 
+            : calculateChessNumber(participant).toString();
+            
+        if (qrData === chessNumber || qrData === participant.id || qrData.includes(participant.id)) {
+            foundParticipant = participant;
+            break;
+        }
+    }
+    
+    if (foundParticipant) {
+        invigilatorReportedParticipants.add(foundParticipant.id);
+        showAlert(`${foundParticipant.name || foundParticipant.representative_name} marked as reported`, 'success');
+        
+        // Stop scanning and close modal
+        stopDirectScanning();
+        
+        // Refresh the main modal content
+        document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
+    } else {
+        // Update status but continue scanning
+        const status = document.getElementById('scan-status');
+        if (status) {
+            status.textContent = `Code not recognized: ${qrData}`;
+            status.className = 'text-sm text-red-600 mb-2';
+            
+            // Reset status after 3 seconds
+            setTimeout(() => {
+                if (status) {
+                    status.textContent = 'Position QR code in view';
+                    status.className = 'text-sm text-blue-600 mb-2';
+                }
+            }, 3000);
+        }
+    }
+}
+
+async function startManualInput() {
+    stopDirectScanning();
+    
+    const qrData = prompt('Enter QR Code data or participant chess number:');
+    
+    if (qrData) {
+        await processScannedQR(qrData.trim());
+    }
+}
+
+function stopDirectScanning() {
+    scanningActive = false;
+    
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
     }
     
     document.getElementById('qrScannerModal').classList.add('hidden');
@@ -617,8 +731,6 @@ function generateQRCode(container, data) {
 function closeQRModal() {
     document.getElementById('qrModal').classList.add('hidden');
     
-    // Stop any active QR scanning
-    if (qrCodeScanner) {
-        stopQRScanning();
-    }
+    // Stop any active scanning
+    stopDirectScanning();
 }

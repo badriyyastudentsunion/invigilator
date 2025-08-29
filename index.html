@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         .hidden { display: none !important; }
         .modal-backdrop { background: rgba(0, 0, 0, 0.5); }
@@ -136,19 +135,13 @@
     </div>
 
     <!-- QR Scanner Modal -->
-    <div id="qrScannerModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+ <div id="qrScannerModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold">QR Code Scanner</h3>
-                <button onclick="stopQRScanning()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                <button onclick="stopDirectScanning()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
             </div>
             <div id="qr-scanner-container"></div>
-            <div class="mt-4 text-center">
-                <p class="text-sm text-gray-600 mb-4">Point camera at QR code</p>
-                <button onclick="stopQRScanning()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    Stop Scanning
-                </button>
-            </div>
         </div>
     </div>
 
