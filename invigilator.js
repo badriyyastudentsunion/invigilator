@@ -7,6 +7,7 @@ let invigilatorParticipants = [];
 let invigilatorReportedParticipants = new Set();
 let invigilatorCodeGenerated = false;
 let invigilatorParticipantCodes = {};
+let invigilatorCompetitionCompleted = false; // New variable for completion status
 let videoStream = null;
 let barcodeDetector = null;
 let scanningActive = false;
@@ -20,7 +21,8 @@ const invigilatorIcons = {
     check: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`,
     scan: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zM13 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1V4z" clip-rule="evenodd"></path></svg>`,
     letter: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"></path></svg>`,
-    proceed: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`
+    proceed: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`,
+    home: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-9 9a1 1 0 101.414 1.414L8 5.414V17a1 1 0 102 0V5.414l6.293 6.293a1 1 0 001.414-1.414l-9-9z"></path></svg>`
 };
 
 async function renderInvigilatorApp(stageId, stageName) {
@@ -152,6 +154,7 @@ async function selectInvigilatorCompetition(competitionId) {
     invigilatorReportedParticipants.clear();
     invigilatorCodeGenerated = false;
     invigilatorParticipantCodes = {};
+    invigilatorCompetitionCompleted = false;
     
     // Load participants for this competition
     await loadCompetitionParticipants(competitionId);
@@ -595,10 +598,33 @@ async function generateCodeLetters() {
     }
 }
 
+// FIXED: Updated renderGeneratedCodes function - removes "Generate QR Codes" button
 function renderGeneratedCodes() {
     const reportedParticipants = invigilatorParticipants.filter(p => 
         invigilatorReportedParticipants.has(p.id)
     );
+    
+    // Show completion message if already completed
+    if (invigilatorCompetitionCompleted) {
+        return `
+            <div class="text-center py-8">
+                <div class="text-green-500">
+                    <svg class="mx-auto h-16 w-16 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <h3 class="mt-2 text-xl font-medium text-green-900">Competition Completed!</h3>
+                    <p class="mt-1 text-sm text-green-700">This competition session has been completed successfully.</p>
+                    <p class="mt-2 text-xs text-green-600">No further changes are allowed.</p>
+                </div>
+                <div class="mt-6">
+                    <button onclick="goToInvigilatorHome()" class="flex items-center mx-auto px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                        ${invigilatorIcons.home}
+                        <span class="ml-2">Back to Home</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
     
     return `
         <div class="mb-6">
@@ -645,17 +671,12 @@ function renderGeneratedCodes() {
                         <p class="text-xs text-gray-500">
                             ${invigilatorSelectedCompetition.is_group ? `Group Size: ${participant.group_size}` : `Chess #${chessNumber}`}
                         </p>
-                        <div id="qr-${participant.id}" class="mt-2"></div>
                     </div>
                 `;
             }).join('')}
         </div>
         
-        <div class="flex justify-center space-x-4">
-            <button onclick="generateQRCodes()" class="flex items-center px-6 py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                ${invigilatorIcons.qr}
-                <span class="ml-2">Generate QR Codes</span>
-            </button>
+        <div class="flex justify-center">
             <button onclick="proceedToNext()" class="flex items-center px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600">
                 ${invigilatorIcons.proceed}
                 <span class="ml-2">Proceed</span>
@@ -664,35 +685,32 @@ function renderGeneratedCodes() {
     `;
 }
 
-function generateQRCodes() {
-    const reportedParticipants = invigilatorParticipants.filter(p => 
-        invigilatorReportedParticipants.has(p.id)
-    );
+// FIXED: Updated proceedToNext function to show completion and disable further changes
+function proceedToNext() {
+    // Mark competition as completed
+    invigilatorCompetitionCompleted = true;
     
-    reportedParticipants.forEach(participant => {
-        const chessNumber = invigilatorSelectedCompetition.is_group 
-            ? `GROUP-${participant.id}` 
-            : calculateChessNumber(participant);
-        
-        const qrContainer = document.getElementById(`qr-${participant.id}`);
-        if (qrContainer) {
-            generateQRCode(qrContainer, chessNumber.toString());
-        }
-    });
+    showAlert('Competition session completed successfully!', 'success');
     
-    showAlert('QR codes generated successfully', 'success');
+    // Update the modal to show completion status
+    document.getElementById('qrModalContent').innerHTML = renderGeneratedCodes();
 }
 
-function proceedToNext() {
-    showAlert('Competition session completed successfully!', 'success');
+// FIXED: New function to go back to invigilator home
+function goToInvigilatorHome() {
+    // Close modal and reset state
     closeQRModal();
     
-    // Reset state for next competition
+    // Reset all state variables
     invigilatorSelectedCompetition = null;
     invigilatorParticipants = [];
     invigilatorReportedParticipants.clear();
     invigilatorCodeGenerated = false;
     invigilatorParticipantCodes = {};
+    invigilatorCompetitionCompleted = false;
+    
+    // Render the home page
+    renderInvigilatorApp(invigilatorCurrentStageId, invigilatorCurrentStageName);
 }
 
 function calculateChessNumber(participant) {
