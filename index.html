@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        .hidden { display: none !important; }
+        .modal-backdrop { background: rgba(0, 0, 0, 0.5); }
+        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+        #qr-scanner-container { width: 100%; max-width: 400px; margin: 0 auto; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b px-6 py-4">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Festival Management System</h1>
+            <button id="btn-logout" class="hidden bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- Authentication -->
+    <div id="auth" class="flex items-center justify-center min-h-screen bg-gray-50">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Login</h2>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="role" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="admin">Admin</option>
+                        <option value="leader">Team Leader</option>
+                        <option value="invigilator">Invigilator</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username/Stage Name</label>
+                    <input type="text" id="username" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter username or stage name">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="Enter password">
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600 font-medium">
+                    Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin App -->
+    <div id="admin-app" class="hidden"></div>
+
+    <!-- Leader App -->
+    <div id="leader-app" class="hidden"></div>
+
+    <!-- Invigilator App -->
+    <div id="invigilator-app" class="hidden"></div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4">
+            <div class="flex items-center mb-4">
+                <div id="alertIcon" class="mr-3"></div>
+                <h3 id="alertTitle" class="text-lg font-semibold"></h3>
+            </div>
+            <p id="alertMessage" class="text-gray-600 mb-4"></p>
+            <button onclick="document.getElementById('alertModal').classList.add('hidden')" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Modals -->
+    <div id="adminModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="adminModalTitle" class="text-xl font-semibold"></h3>
+                <button onclick="closeAdminModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="adminModalContent"></div>
+        </div>
+    </div>
+
+    <div id="adminBulkImportModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">Bulk Import</h3>
+                <button onclick="closeAdminBulkImportModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="adminBulkImportContent"></div>
+        </div>
+    </div>
+
+    <!-- Leader Modals -->
+    <div id="leaderAssignModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="leaderAssignModalTitle" class="text-xl font-semibold"></h3>
+                <button onclick="closeLeaderAssignModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="leaderAssignModalContent"></div>
+        </div>
+    </div>
+
+    <div id="leaderAlertModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4">
+            <div class="flex items-center mb-4">
+                <div id="leaderAlertIcon" class="mr-3"></div>
+                <h3 id="leaderAlertTitle" class="text-lg font-semibold"></h3>
+            </div>
+            <p id="leaderAlertMessage" class="text-gray-600 mb-4"></p>
+            <button onclick="document.getElementById('leaderAlertModal').classList.add('hidden')" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal for Invigilator -->
+    <div id="qrModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="qrModalTitle" class="text-xl font-semibold"></h3>
+                <button onclick="closeQRModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="qrModalContent"></div>
+        </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qrScannerModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold">QR Code Scanner</h3>
+                <button onclick="stopQRScanning()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="qr-scanner-container"></div>
+            <div class="mt-4 text-center">
+                <p class="text-sm text-gray-600 mb-4">Point camera at QR code</p>
+                <button onclick="stopQRScanning()" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Stop Scanning
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="app.js"></script>
+    <script src="admin.js"></script>
+    <script src="leader.js"></script>
+    <script src="invigilator.js"></script>
+</body>
+</html>
