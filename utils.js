@@ -43,11 +43,18 @@ function clearUser() {
 // Initialize the app with better error handling
 function init() {
     const user = getUser();
+    const header = document.getElementById('mainHeader');
+    const headerTitle = document.getElementById('headerTitle');
+    
     if (user) {
+        // Show header and logout button
+        header.classList.remove('hidden');
         document.getElementById('btn-logout').classList.remove('hidden');
         hide(document.getElementById('auth'));
         
         if (user.role === 'admin') {
+            // Show full header with Exuberanza text for admin
+            headerTitle.innerHTML = '<h1 class="text-lg font-bold text-gray-800">Exuberanza</h1>';
             show(document.getElementById('admin-app'));
             if (typeof renderAdminApp === 'function') {
                 renderAdminApp().catch(error => {
@@ -57,6 +64,8 @@ function init() {
                 });
             }
         } else if (user.role === 'leader') {
+            // Show full header with Exuberanza text for leader
+            headerTitle.innerHTML = '<h1 class="text-lg font-bold text-gray-800">Exuberanza</h1>';
             show(document.getElementById('leader-app'));
             if (typeof renderLeaderApp === 'function') {
                 renderLeaderApp(user.team_id).catch(error => {
@@ -66,6 +75,13 @@ function init() {
                 });
             }
         } else if (user.role === 'invigilator') {
+            // Hide Exuberanza text for invigilator, show only stage name
+            headerTitle.innerHTML = `
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800">${user.name}</h1>
+                    <p class="text-xs text-gray-500">Competition Management</p>
+                </div>
+            `;
             show(document.getElementById('invigilator-app'));
             if (typeof renderInvigilatorApp === 'function') {
                 renderInvigilatorApp(user.id, user.name).catch(error => {
@@ -76,6 +92,8 @@ function init() {
             }
         }
     } else {
+        // Hide header on login page
+        header.classList.add('hidden');
         show(document.getElementById('auth'));
     }
 }
@@ -83,10 +101,17 @@ function init() {
 // Logout functionality
 function logout() {
     clearUser();
+    
+    // Hide header and logout button
+    document.getElementById('mainHeader').classList.add('hidden');
     document.getElementById('btn-logout').classList.add('hidden');
+    
+    // Hide all app sections
     hide(document.getElementById('admin-app'));
     hide(document.getElementById('leader-app'));
     hide(document.getElementById('invigilator-app'));
+    
+    // Show auth section
     show(document.getElementById('auth'));
     
     // Reset forms
