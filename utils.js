@@ -59,12 +59,28 @@ function updateHeader(role, title = '') {
     }
 }
 
+// Update logout button with icon
+function updateLogoutButton() {
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) {
+        logoutBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="inline -ml-0.5 mr-2 w-4 h-4" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3a1 1 0 10-2 0v7a1 1 0 002 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 21h6a2 2 0 002-2V11H7v8a2 2 0 002 2z" />
+            </svg>
+            Logout
+        `;
+    }
+}
+
 // Initialize the app with better error handling
 function init() {
     const user = getUser();
     
     if (user) {
         document.getElementById('btn-logout').classList.remove('hidden');
+        updateLogoutButton();
         hide(document.getElementById('auth'));
         
         if (user.role === 'admin') {
@@ -96,6 +112,9 @@ function init() {
                     showAlert('Failed to load invigilator interface', 'error');
                     logout();
                 });
+            } else {
+                console.error('renderInvigilatorApp function not found');
+                showAlert('Invigilator interface not loaded', 'error');
             }
         }
     } else {
