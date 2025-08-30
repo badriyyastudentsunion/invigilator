@@ -1,16 +1,39 @@
 {
-  "name": "Arts Festival Management",
-  "short_name": "ArtsFest",
-  "description": "Manage arts festival teams and competitions",
+  "name": "Exuberanza Festival Management",
+  "short_name": "Exuberanza",
+  "description": "Festival competition management system for invigilators",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#3B82F6",
-  "theme_color": "#3B82F6",
+  "background_color": "#1f2937",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
-      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjM0I4MkY2Ii8+CjxwYXRoIGQ9Ik05NiA0OEw3MiAxMjBIMTIwTDk2IDQ4WiIgZmlsbD0id2hpdGUiLz4KPHN2Zz4K",
+      "src": "logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["productivity", "education"],
+  "shortcuts": [
+    {
+      "name": "Invigilator Login",
+      "short_name": "Login",
+      "description": "Quick access to invigilator login",
+      "url": "/?role=invigilator",
+      "icons": [{ "src": "logo.png", "sizes": "192x192" }]
     }
   ]
 }
