@@ -1,13 +1,13 @@
 {
-  "name": "Exuberanza Festival Management",
+  "name": "Exuberanza",
   "short_name": "Exuberanza",
   "description": "Festival competition management system for invigilators",
-  "start_url": "/",
+  "start_url": "https://badriyyastudentsunion.github.io/invigilator/",
+  "scope": "https://badriyyastudentsunion.github.io/invigilator/",
   "display": "standalone",
   "background_color": "#1f2937",
   "theme_color": "#3b82f6",
   "orientation": "portrait",
-  "scope": "/",
   "icons": [
     {
       "src": "logo.png",
@@ -32,7 +32,7 @@
       "name": "Invigilator Login",
       "short_name": "Login",
       "description": "Quick access to invigilator login",
-      "url": "/?role=invigilator",
+      "url": "https://badriyyastudentsunion.github.io/exuberanza/?role=invigilator",
       "icons": [{ "src": "logo.png", "sizes": "192x192" }]
     }
   ]
