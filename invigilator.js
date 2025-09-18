@@ -16,7 +16,7 @@ let lastScannedCode = null;
 // Professional SVG Icons
 const invigilatorIcons = {
     competitions: `<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`,
-    participants: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 715-5z"></path></svg>`,
+    participants: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 715 5v1H1v-1a5 5 0 715-5z"></path></svg>`,
     qr: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zM13 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1V4z"></path></svg>`,
     check: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>`,
     scan: `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zM13 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1V4z" clip-rule="evenodd"></path></svg>`,
@@ -28,20 +28,18 @@ const invigilatorIcons = {
 async function renderInvigilatorApp(stageId, stageName) {
     try {
         console.log('Initializing invigilator app for stage:', stageName);
-        
         invigilatorCurrentStageId = stageId;
         invigilatorCurrentStageName = stageName;
-        
+
         // Initialize barcode detector
         await initializeBarcodeDetector();
-        
         await loadInvigilatorData();
-        
+
         const root = document.getElementById('invigilator-app');
         if (!root) {
             throw new Error('Invigilator app container not found');
         }
-        
+
         root.innerHTML = `
             <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
                 <!-- Stage Info Card -->
@@ -60,19 +58,21 @@ async function renderInvigilatorApp(stageId, stageName) {
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Content -->
                 <div class="px-4 pb-4">
                     ${renderInvigilatorCompetitions()}
                 </div>
             </div>
         `;
-        
+
         console.log('Invigilator app rendered successfully');
         
         // Add haptic feedback
-        if (window.hapticFeedback) window.hapticFeedback('light');
-        
+        if (window.hapticFeedback) {
+            window.hapticFeedback('light');
+        }
+
     } catch (error) {
         console.error('Error rendering invigilator app:', error);
         showAlert('Failed to load invigilator interface: ' + error.message, 'error');
@@ -106,18 +106,18 @@ async function loadInvigilatorData() {
             `)
             .eq('stage_id', invigilatorCurrentStageId)
             .order('categories(name), name');
-            
+
         if (error) {
             console.error('Error loading competitions:', error);
             throw new Error('Failed to load competitions: ' + error.message);
         }
-        
-        invigilatorCompetitions = competitions || [];
+
+        invigilatorCompetitions = competitions;
         console.log(`Loaded ${invigilatorCompetitions.length} competitions`);
-        
+
         // Check for completed competitions
         await checkCompletedCompetitions();
-        
+
     } catch (error) {
         console.error('Error loading invigilator data:', error);
         throw error;
@@ -130,7 +130,7 @@ async function checkCompletedCompetitions() {
             .from('competition_sessions')
             .select('competition_id')
             .eq('stage_id', invigilatorCurrentStageId);
-            
+
         if (!error && sessions) {
             const completedCompetitionIds = [...new Set(sessions.map(s => s.competition_id))];
             invigilatorCompetitions.forEach(competition => {
@@ -156,7 +156,7 @@ function renderInvigilatorCompetitions() {
             </div>
         `;
     }
-    
+
     return `
         <div class="space-y-4">
             <div class="flex items-center justify-between mb-4">
@@ -165,8 +165,7 @@ function renderInvigilatorCompetitions() {
             </div>
             
             ${invigilatorCompetitions.map(competition => `
-                <div class="competition-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden tap-highlight touch-action" 
-                     onclick="selectInvigilatorCompetition('${competition.id}')">
+                <div class="competition-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden tap-highlight touch-action" onclick="selectInvigilatorCompetition('${competition.id}')">
                     <div class="p-4">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
@@ -179,38 +178,26 @@ function renderInvigilatorCompetitions() {
                                         <p class="text-sm text-gray-500">${competition.categories.name}</p>
                                     </div>
                                 </div>
-                                
                                 <div class="flex items-center space-x-4 mt-3">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                                        competition.categories.name === 'MIX ZONE' 
-                                            ? 'bg-purple-100 text-purple-800' 
-                                            : 'bg-blue-100 text-blue-800'
-                                    }">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${competition.categories.name === 'MIX ZONE' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}">
                                         ${competition.categories.name}
                                     </span>
-                                    
                                     <span class="text-xs text-gray-500">
-                                        ${competition.is_stage ? '🎭' : '📚'} 
-                                        ${competition.is_group ? 'Group' : 'Individual'}
+                                        ${competition.is_stage ? (competition.is_group ? 'Group' : 'Individual') : 'Non-Stage'}
                                     </span>
-                                    
-                                    <span class="text-xs text-gray-500">
-                                        Max ${competition.max_participants_per_team}
-                                    </span>
+                                    <span class="text-xs text-gray-500">Max ${competition.max_participants_per_team}</span>
                                 </div>
                             </div>
-                            
                             <div class="flex flex-col items-end space-y-2">
                                 ${competition.isCompleted ? `
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        ✓ Completed
+                                        Completed
                                     </span>
                                 ` : `
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        📋 Pending
+                                        Pending
                                     </span>
                                 `}
-                                
                                 <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                                 </svg>
@@ -224,11 +211,13 @@ function renderInvigilatorCompetitions() {
 }
 
 async function selectInvigilatorCompetition(competitionId) {
-    if (window.hapticFeedback) window.hapticFeedback('light');
-    
+    if (window.hapticFeedback) {
+        window.hapticFeedback('light');
+    }
+
     invigilatorSelectedCompetition = invigilatorCompetitions.find(c => c.id === competitionId);
     if (!invigilatorSelectedCompetition) return;
-    
+
     try {
         await checkExistingCompetitionSession(competitionId);
         await loadCompetitionParticipants(competitionId);
@@ -236,7 +225,9 @@ async function selectInvigilatorCompetition(competitionId) {
     } catch (error) {
         console.error('Error selecting competition:', error);
         showAlert('Failed to load competition details: ' + error.message, 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
     }
 }
 
@@ -247,19 +238,25 @@ async function checkExistingCompetitionSession(competitionId) {
             .select('*')
             .eq('competition_id', competitionId)
             .eq('stage_id', invigilatorCurrentStageId);
-            
+
         if (error) {
             console.error('Error checking existing sessions:', error);
             return;
         }
-        
+
         if (sessions && sessions.length > 0) {
             invigilatorCodesFinalized = true;
             invigilatorCodeGenerated = true;
             
+            // Clear and repopulate reported participants and codes
+            invigilatorReportedParticipants.clear();
             sessions.forEach(session => {
-                invigilatorReportedParticipants.add(session.participant_id);
-                invigilatorParticipantCodes[session.participant_id] = session.random_code;
+                // Handle both individual participants and group entries
+                const participantId = session.participant_id || session.group_entry_id;
+                if (participantId) {
+                    invigilatorReportedParticipants.add(participantId);
+                    invigilatorParticipantCodes[participantId] = session.random_code;
+                }
             });
         } else {
             invigilatorReportedParticipants.clear();
@@ -275,19 +272,30 @@ async function checkExistingCompetitionSession(competitionId) {
 async function loadCompetitionParticipants(competitionId) {
     try {
         if (invigilatorSelectedCompetition.is_group) {
+            // Load group entries
             const { data: groupEntries, error } = await db
                 .from('group_entries')
-                .select(`*, teams(name)`)
+                .select(`
+                    *,
+                    teams(name)
+                `)
                 .eq('competition_id', competitionId);
-                
+
             if (error) throw error;
             invigilatorParticipants = groupEntries || [];
         } else {
+            // Load individual participants
             const { data: assignments, error } = await db
                 .from('assignments')
-                .select(`*, participants(*, teams(name), categories(name))`)
+                .select(`
+                    *,
+                    participants(*,
+                        teams(name),
+                        categories(name)
+                    )
+                `)
                 .eq('competition_id', competitionId);
-                
+
             if (error) throw error;
             invigilatorParticipants = assignments?.map(a => a.participants) || [];
         }
@@ -327,43 +335,37 @@ function renderParticipantReporting() {
     if (invigilatorCodeGenerated) {
         return renderGeneratedCodes();
     }
-    
+
     const checkedInCount = invigilatorReportedParticipants.size;
     const totalCount = invigilatorParticipants.length;
-    
+
     return `
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 mb-6">
             <div class="flex items-center justify-between mb-3">
                 <h4 class="text-lg font-semibold text-gray-800">Participant Check-in</h4>
                 <span class="text-sm font-medium text-blue-600">${checkedInCount}/${totalCount}</span>
             </div>
-            
             <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
-                <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-                     style="width: ${totalCount > 0 ? (checkedInCount / totalCount) * 100 : 0}%"></div>
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: ${totalCount > 0 ? (checkedInCount / totalCount) * 100 : 0}%"></div>
             </div>
-            
             <div class="flex items-center justify-between">
                 <p class="text-sm text-gray-600">
                     Checked In: <span class="font-medium text-green-600">${checkedInCount}</span> participants
                 </p>
-                <button onclick="startDirectQRScanning()" 
-                        class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 touch-action">
+                <button onclick="startDirectQRScanning()" class="flex items-center px-4 py-2 bg-blue-500 text-white rounded-xl text-sm font-medium hover:bg-blue-600 touch-action">
                     ${invigilatorIcons.scan}
                     <span class="ml-2">Scan QR</span>
                 </button>
             </div>
         </div>
-        
+
         <div class="space-y-3 mb-6 max-h-96 overflow-y-auto">
             ${invigilatorParticipants.map(participant => {
                 const isCheckedIn = invigilatorReportedParticipants.has(participant.id);
                 const chessNumber = calculateChessNumber(participant);
                 
                 return `
-                    <div class="flex items-center justify-between p-4 bg-white border rounded-xl ${
-                        isCheckedIn ? 'border-green-200 bg-green-50' : 'border-gray-200'
-                    } transition-all duration-200">
+                    <div class="flex items-center justify-between p-4 bg-white border rounded-xl ${isCheckedIn ? 'border-green-200 bg-green-50' : 'border-gray-200'} transition-all duration-200">
                         <div class="flex-1">
                             <h5 class="font-medium text-gray-900">
                                 ${participant.name || participant.representative_name}
@@ -371,21 +373,13 @@ function renderParticipantReporting() {
                             <p class="text-sm text-gray-500">${participant.teams?.name || 'No Team'}</p>
                             <p class="text-xs text-gray-400">Chess #${chessNumber}</p>
                         </div>
-                        
                         <div class="flex items-center space-x-3">
                             ${!invigilatorCodesFinalized ? `
-                                <button onclick="toggleParticipantReport('${participant.id}')" 
-                                        class="px-4 py-2 text-sm rounded-lg font-medium touch-action transition-colors ${
-                                            isCheckedIn 
-                                                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                                                : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                        }">
+                                <button onclick="toggleParticipantReport('${participant.id}')" class="px-4 py-2 text-sm rounded-lg font-medium touch-action transition-colors ${isCheckedIn ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}">
                                     ${isCheckedIn ? 'Undo' : 'Check In'}
                                 </button>
                             ` : `
-                                <span class="px-4 py-2 text-sm rounded-lg font-medium ${
-                                    isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                                }">
+                                <span class="px-4 py-2 text-sm rounded-lg font-medium ${isCheckedIn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}">
                                     ${isCheckedIn ? 'Participated' : 'Not Present'}
                                 </span>
                             `}
@@ -394,11 +388,10 @@ function renderParticipantReporting() {
                 `;
             }).join('')}
         </div>
-        
+
         ${checkedInCount > 0 && !invigilatorCodesFinalized ? `
             <div class="sticky bottom-0 bg-white border-t pt-4 -mx-6 px-6 -mb-6 pb-6">
-                <button onclick="generateCodeLetters()" 
-                        class="w-full flex items-center justify-center px-6 py-4 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 touch-action">
+                <button onclick="generateCodeLetters()" class="w-full flex items-center justify-center px-6 py-4 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 touch-action">
                     ${invigilatorIcons.letter}
                     <span class="ml-2">Generate Code Letters (${checkedInCount} participants)</span>
                 </button>
@@ -410,28 +403,36 @@ function renderParticipantReporting() {
 function toggleParticipantReport(participantId) {
     if (invigilatorCodesFinalized) {
         showAlert('Competition has been finalized. No changes allowed.', 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         return;
     }
-    
+
     if (invigilatorReportedParticipants.has(participantId)) {
         invigilatorReportedParticipants.delete(participantId);
-        if (window.hapticFeedback) window.hapticFeedback('light');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('light');
+        }
     } else {
         invigilatorReportedParticipants.add(participantId);
-        if (window.hapticFeedback) window.hapticFeedback('success');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('success');
+        }
     }
-    
+
     document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
 }
 
 async function startDirectQRScanning() {
     if (invigilatorCodesFinalized) {
         showAlert('Competition has been finalized. No changes allowed.', 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         return;
     }
-    
+
     lastScannedCode = null;
     
     try {
@@ -450,11 +451,7 @@ async function startDirectQRScanning() {
 async function startBuiltInScanning() {
     try {
         videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { 
-                facingMode: 'environment',
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            }
+            video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
         });
 
         const modal = document.getElementById('qrScannerModal');
@@ -465,29 +462,28 @@ async function startBuiltInScanning() {
             <div class="mt-4 text-center">
                 <div id="scan-status" class="text-sm text-blue-600 mb-3">Position QR code in view</div>
                 <div class="flex justify-center space-x-3">
-                    <button onclick="stopDirectScanning()" 
-                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 touch-action">
+                    <button onclick="stopDirectScanning()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 touch-action">
                         Stop Scanning
                     </button>
-                    <button onclick="startManualInput()" 
-                            class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 touch-action">
+                    <button onclick="startManualInput()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 touch-action">
                         Manual Input
                     </button>
                 </div>
                 <p class="text-xs text-gray-500 mt-3">Scan multiple QR codes continuously</p>
             </div>
         `;
-        
+
         const video = document.getElementById('qr-video');
         video.srcObject = videoStream;
-        
         modal.classList.remove('hidden');
         scanningActive = true;
-        
-        if (window.hapticFeedback) window.hapticFeedback('light');
-        
+
+        if (window.hapticFeedback) {
+            window.hapticFeedback('light');
+        }
+
         await scanQRLoop(video);
-        
+
     } catch (error) {
         console.error('Camera access denied:', error);
         showAlert('Camera access required for QR scanning', 'error');
@@ -500,14 +496,13 @@ async function scanQRLoop(video) {
     
     try {
         const barcodes = await barcodeDetector.detect(video);
-        
         if (barcodes.length > 0) {
             const qrData = barcodes[0].rawValue;
-            
-            if (qrData !== lastScannedCode) {
+            if (qrData && qrData !== lastScannedCode) {
                 lastScannedCode = qrData;
                 await processScannedQR(qrData);
                 
+                // Reset lastScannedCode after 2 seconds to allow re-scanning same code
                 setTimeout(() => {
                     if (lastScannedCode === qrData) {
                         lastScannedCode = null;
@@ -527,9 +522,9 @@ async function scanQRLoop(video) {
 async function processScannedQR(qrData) {
     let foundParticipant = null;
     
+    // Search for participant
     for (const participant of invigilatorParticipants) {
         const chessNumber = calculateChessNumber(participant).toString();
-            
         if (qrData === chessNumber || qrData === participant.id || qrData.includes(participant.id)) {
             foundParticipant = participant;
             break;
@@ -538,24 +533,24 @@ async function processScannedQR(qrData) {
     
     if (foundParticipant) {
         const wasAlreadyCheckedIn = invigilatorReportedParticipants.has(foundParticipant.id);
-        
         if (!wasAlreadyCheckedIn) {
             invigilatorReportedParticipants.add(foundParticipant.id);
-            showAlert(`${foundParticipant.name || foundParticipant.representative_name} checked in`, 'success');
-            
-            if (window.hapticFeedback) window.hapticFeedback('success');
-            
+            showAlert(`${foundParticipant.name || foundParticipant.representative_name} checked in!`, 'success');
+            if (window.hapticFeedback) {
+                window.hapticFeedback('success');
+            }
             document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
         } else {
             showAlert(`${foundParticipant.name || foundParticipant.representative_name} already checked in`, 'info');
-            if (window.hapticFeedback) window.hapticFeedback('light');
+            if (window.hapticFeedback) {
+                window.hapticFeedback('light');
+            }
         }
         
         const status = document.getElementById('scan-status');
         if (status) {
-            status.textContent = `✓ ${foundParticipant.name || foundParticipant.representative_name}`;
+            status.textContent = `${foundParticipant.name || foundParticipant.representative_name}`;
             status.className = 'text-sm text-green-600 mb-3';
-            
             setTimeout(() => {
                 if (status && scanningActive) {
                     status.textContent = 'Position QR code in view';
@@ -564,13 +559,14 @@ async function processScannedQR(qrData) {
             }, 3000);
         }
     } else {
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         
         const status = document.getElementById('scan-status');
         if (status) {
             status.textContent = `Code not recognized: ${qrData}`;
             status.className = 'text-sm text-red-600 mb-3';
-            
             setTimeout(() => {
                 if (status && scanningActive) {
                     status.textContent = 'Position QR code in view';
@@ -602,13 +598,23 @@ function stopDirectScanning() {
 
 async function validateParticipantExists(participantId) {
     try {
-        const { data, error } = await db
-            .from('participants')
-            .select('id')
-            .eq('id', participantId)
-            .single();
-            
-        return data !== null && !error;
+        if (invigilatorSelectedCompetition.is_group) {
+            // For group competitions, validate group entry exists
+            const { data, error } = await db
+                .from('group_entries')
+                .select('id')
+                .eq('id', participantId)
+                .single();
+            return data !== null && !error;
+        } else {
+            // For individual competitions, validate participant exists
+            const { data, error } = await db
+                .from('participants')
+                .select('id')
+                .eq('id', participantId)
+                .single();
+            return data !== null && !error;
+        }
     } catch (error) {
         console.error('Error validating participant:', error);
         return false;
@@ -617,43 +623,43 @@ async function validateParticipantExists(participantId) {
 
 async function generateCodeLetters() {
     if (invigilatorReportedParticipants.size === 0) {
-        showAlert('No participants checked in yet', 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        showAlert('No participants checked in yet!', 'error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         return;
     }
-    
-    const reportedParticipants = invigilatorParticipants.filter(p => 
-        invigilatorReportedParticipants.has(p.id)
-    );
-    
+
+    const reportedParticipants = invigilatorParticipants.filter(p => invigilatorReportedParticipants.has(p.id));
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const shuffledLetters = letters.split('').slice(0, reportedParticipants.length);
-    
+
+    // Shuffle array
     for (let i = shuffledLetters.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledLetters[i], shuffledLetters[j]] = [shuffledLetters[j], shuffledLetters[i]];
     }
-    
+
     reportedParticipants.forEach((participant, index) => {
         invigilatorParticipantCodes[participant.id] = shuffledLetters[index];
     });
-    
+
     invigilatorCodeGenerated = true;
-    showAlert(`Code letters generated for ${reportedParticipants.length} participants`, 'success');
-    if (window.hapticFeedback) window.hapticFeedback('success');
     
+    showAlert(`Code letters generated for ${reportedParticipants.length} participants!`, 'success');
+    if (window.hapticFeedback) {
+        window.hapticFeedback('success');
+    }
+
     document.getElementById('qrModalContent').innerHTML = renderGeneratedCodes();
 }
 
 function renderGeneratedCodes() {
-    const reportedParticipants = invigilatorParticipants.filter(p => 
-        invigilatorReportedParticipants.has(p.id)
-    );
-    
+    const reportedParticipants = invigilatorParticipants.filter(p => invigilatorReportedParticipants.has(p.id));
     const statusText = invigilatorCodesFinalized ? 'Competition Completed' : 'Ready to Start';
     const statusColor = invigilatorCodesFinalized ? 'text-blue-800' : 'text-green-800';
     const statusBg = invigilatorCodesFinalized ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200';
-    
+
     return `
         <div class="${statusBg} border rounded-xl p-4 mb-6">
             <div class="flex items-start space-x-3">
@@ -665,14 +671,10 @@ function renderGeneratedCodes() {
                 <div class="flex-1">
                     <h3 class="font-semibold ${statusColor}">${statusText}</h3>
                     <p class="text-sm ${statusColor.replace('800', '600')} mt-1">
-                        ${invigilatorCodesFinalized ? 
-                            'This competition has been completed and results are saved.' : 
-                            'Code letters generated. Ready to proceed with competition.'
-                        }
+                        ${invigilatorCodesFinalized ? 'This competition has been completed and results are saved.' : 'Code letters generated. Ready to proceed with competition.'}
                     </p>
                     ${!invigilatorCodesFinalized ? `
-                        <button onclick="goBackToReporting()" 
-                                class="inline-flex items-center mt-3 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 touch-action">
+                        <button onclick="goBackToReporting()" class="inline-flex items-center mt-3 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 touch-action">
                             ${invigilatorIcons.back}
                             <span class="ml-1.5">Back to Check-in</span>
                         </button>
@@ -680,22 +682,16 @@ function renderGeneratedCodes() {
                 </div>
             </div>
         </div>
-        
+
         <div class="qr-grid mb-6">
             ${reportedParticipants.map(participant => {
                 const code = invigilatorParticipantCodes[participant.id];
                 const chessNumber = calculateChessNumber(participant);
                 
                 return `
-                    <div class="bg-white rounded-xl border p-4 text-center ${
-                        invigilatorCodesFinalized ? 'border-blue-200' : 'border-green-200'
-                    }">
-                        <div class="w-16 h-16 mx-auto mb-3 ${
-                            invigilatorCodesFinalized ? 'bg-blue-100' : 'bg-green-100'
-                        } rounded-xl flex items-center justify-center">
-                            <span class="text-2xl font-bold ${
-                                invigilatorCodesFinalized ? 'text-blue-800' : 'text-green-800'
-                            }">${code}</span>
+                    <div class="bg-white rounded-xl border p-4 text-center ${invigilatorCodesFinalized ? 'border-blue-200' : 'border-green-200'}">
+                        <div class="w-16 h-16 mx-auto mb-3 ${invigilatorCodesFinalized ? 'bg-blue-100' : 'bg-green-100'} rounded-xl flex items-center justify-center">
+                            <span class="text-2xl font-bold ${invigilatorCodesFinalized ? 'text-blue-800' : 'text-green-800'}">${code}</span>
                         </div>
                         <h5 class="font-medium text-gray-900 text-sm leading-tight">
                             ${participant.name || participant.representative_name}
@@ -706,17 +702,15 @@ function renderGeneratedCodes() {
                 `;
             }).join('')}
         </div>
-        
+
         <div class="sticky bottom-0 bg-white border-t pt-4 -mx-6 px-6 -mb-6 pb-6">
             ${!invigilatorCodesFinalized ? `
-                <button onclick="proceedToNext()" 
-                        class="w-full flex items-center justify-center px-6 py-4 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 touch-action">
+                <button onclick="proceedToNext()" class="w-full flex items-center justify-center px-6 py-4 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 touch-action">
                     ${invigilatorIcons.proceed}
                     <span class="ml-2">Proceed & Finalize Competition</span>
                 </button>
             ` : `
-                <button onclick="closeQRModal()" 
-                        class="w-full flex items-center justify-center px-6 py-4 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 touch-action">
+                <button onclick="closeQRModal()" class="w-full flex items-center justify-center px-6 py-4 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 touch-action">
                     <span>Close</span>
                 </button>
             `}
@@ -727,67 +721,82 @@ function renderGeneratedCodes() {
 function goBackToReporting() {
     if (invigilatorCodesFinalized) {
         showAlert('Competition has been finalized. Cannot go back to check-in.', 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         return;
     }
-    
+
     invigilatorCodeGenerated = false;
-    if (window.hapticFeedback) window.hapticFeedback('light');
+    if (window.hapticFeedback) {
+        window.hapticFeedback('light');
+    }
     document.getElementById('qrModalContent').innerHTML = renderParticipantReporting();
 }
 
 async function proceedToNext() {
     if (invigilatorReportedParticipants.size === 0) {
-        showAlert('No participants checked in', 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        showAlert('No participants checked in!', 'error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
         return;
     }
-    
-    const reportedParticipants = invigilatorParticipants.filter(p => 
-        invigilatorReportedParticipants.has(p.id)
-    );
-    
+
+    const reportedParticipants = invigilatorParticipants.filter(p => invigilatorReportedParticipants.has(p.id));
+
     try {
         // Validate all participants exist in database before inserting
         for (const participant of reportedParticipants) {
             const exists = await validateParticipantExists(participant.id);
             if (!exists) {
-                showAlert(`Participant ${participant.name || participant.representative_name} not found in database`, 'error');
-                if (window.hapticFeedback) window.hapticFeedback('error');
+                showAlert(`Participant ${participant.name || participant.representative_name} not found in database!`, 'error');
+                if (window.hapticFeedback) {
+                    window.hapticFeedback('error');
+                }
                 return;
             }
         }
-        
+
         const competitionSessions = reportedParticipants.map(participant => ({
             competition_id: invigilatorSelectedCompetition.id,
             stage_id: invigilatorCurrentStageId,
-            participant_id: participant.id,
+            // Set appropriate participant or group entry ID based on competition type
+            participant_id: invigilatorSelectedCompetition.is_group ? null : participant.id,
+            group_entry_id: invigilatorSelectedCompetition.is_group ? participant.id : null,
             random_code: invigilatorParticipantCodes[participant.id]
         }));
-        
-        const { error } = await db.from('competition_sessions')
-            .upsert(competitionSessions, {
-                onConflict: 'competition_id,participant_id'
+
+        const { error } = await db
+            .from('competition_sessions')
+            .upsert(competitionSessions, { 
+                onConflict: 'competition_id,participant_id,group_entry_id' 
             });
-        
+
         if (error) {
             console.error('Error finalizing competition:', error);
             showAlert('Failed to finalize competition: ' + error.message, 'error');
-            if (window.hapticFeedback) window.hapticFeedback('error');
+            if (window.hapticFeedback) {
+                window.hapticFeedback('error');
+            }
             return;
         }
-        
+
         invigilatorCodesFinalized = true;
         
         showAlert(`Competition finalized! ${reportedParticipants.length} participants registered.`, 'success');
-        if (window.hapticFeedback) window.hapticFeedback('success');
-        
+        if (window.hapticFeedback) {
+            window.hapticFeedback('success');
+        }
+
         document.getElementById('qrModalContent').innerHTML = renderGeneratedCodes();
-        
+
     } catch (error) {
         console.error('Error finalizing competition:', error);
         showAlert('Failed to finalize competition: ' + error.message, 'error');
-        if (window.hapticFeedback) window.hapticFeedback('error');
+        if (window.hapticFeedback) {
+            window.hapticFeedback('error');
+        }
     }
 }
 
@@ -798,15 +807,19 @@ function calculateChessNumber(participant) {
     
     const teamIndex = participant.teams ? 
         [...new Set(invigilatorParticipants.map(p => p.teams?.name))].sort().indexOf(participant.teams.name) : 0;
-    return (teamIndex + 1) * 100 + (parseInt(participant.id.slice(-3), 36) % 99 + 1);
+    
+    return ((teamIndex + 1) * 100) + (parseInt(participant.id.slice(-3), 36) % 99) + 1;
 }
 
 function closeQRModal() {
     document.getElementById('qrModal').classList.add('hidden');
     stopDirectScanning();
     
-    if (window.hapticFeedback) window.hapticFeedback('light');
-    
+    if (window.hapticFeedback) {
+        window.hapticFeedback('light');
+    }
+
+    // Reset state if competition not finalized
     if (!invigilatorCodesFinalized) {
         invigilatorSelectedCompetition = null;
         invigilatorParticipants = [];
