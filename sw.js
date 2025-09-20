@@ -1,46 +1,137 @@
-const CACHE_NAME = 'exuberanza-v1';
+const CACHE_NAME = 'festival-management-v1.0.0';
 const urlsToCache = [
-  '/',
-  '/manifest.json',
-  '/logo.png',
-  '/exuberanza.svg',
-  '/utils.js',
-  '/app.js',
-  '/admin.js',
-  '/leader.js',
-  '/invigilator.js',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdn.tailwindcss.com',
-  'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js'
+    '/',
+    '/index.html',
+    '/app.js',
+    '/admin.js',
+    '/judge.js',
+    '/announcer.js',
+    '/invigilator.js',
+    '/manifest.json'
+    // Removed external CDN URLs that cause CORS issues
 ];
 
+// Install event
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
+    console.log('Service Worker installing...');
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => {
+                console.log('Caching app shell');
+                return cache.addAll(urlsToCache);
+            })
+            .catch((error) => {
+                console.error('Cache add failed:', error);
+            })
+    );
+    // Force the waiting service worker to become the active service worker
+    self.skipWaiting();
 });
 
+// Activate event
+self.addEventListener('activate', (event) => {
+    console.log('Service Worker activating...');
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => {
+            // Ensure the new service worker takes control immediately
+            return self.clients.claim();
+        })
+    );
+});
+
+// Fetch event
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    // Skip requests to external APIs (like Supabase)
+    if (event.request.url.includes('supabase.co') || 
+        event.request.url.includes('tailwindcss.com')) {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => {
+                // Return cached version if available
+                if (response) {
+                    return response;
+                }
+
+                // Clone the request because it's a stream
+                const fetchRequest = event.request.clone();
+
+                return fetch(fetchRequest).then((response) => {
+                    // Check if we received a valid response
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+
+                    // Clone the response because it's a stream
+                    const responseToCache = response.clone();
+
+                    caches.open(CACHE_NAME)
+                        .then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
+
+                    return response;
+                }).catch((error) => {
+                    console.error('Fetch failed:', error);
+                    // Return a custom offline page or response
+                    if (event.request.destination === 'document') {
+                        return caches.match('/index.html');
+                    }
+                });
+            })
+    );
 });
 
-// Handle background sync
+// Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
+    if (event.tag === 'background-sync') {
+        event.waitUntil(doBackgroundSync());
+    }
 });
 
-function doBackgroundSync() {
-  // Handle offline sync when connection is restored
-  return Promise.resolve();
+async function doBackgroundSync() {
+    console.log('Performing background sync...');
+    // Add your background sync logic here
 }
+
+// Push notifications (if needed later)
+self.addEventListener('push', (event) => {
+    if (event.data) {
+        const data = event.data.json();
+        const options = {
+            body: data.body,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            data: data.data
+        };
+
+        event.waitUntil(
+            self.registration.showNotification(data.title, options)
+        );
+    }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    event.waitUntil(
+        clients.openWindow('/')
+    );
+});

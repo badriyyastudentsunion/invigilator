@@ -1,39 +1,36 @@
 {
-  "name": "Exuberanza",
-  "short_name": "Exuberanza",
-  "description": "Festival competition management system for invigilators",
-  "start_url": "https://badriyyastudentsunion.github.io/invigilator/",
-  "scope": "https://badriyyastudentsunion.github.io/invigilator/",
-  "display": "standalone",
-  "background_color": "#1f2937",
-  "theme_color": "#3b82f6",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "logo.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "categories": ["productivity", "education"],
-  "shortcuts": [
-    {
-      "name": "Invigilator Login",
-      "short_name": "Login",
-      "description": "Quick access to invigilator login",
-      "url": "https://badriyyastudentsunion.github.io/exuberanza/?role=invigilator",
-      "icons": [{ "src": "logo.png", "sizes": "192x192" }]
-    }
-  ]
+    "name": "Festival Management System",
+    "short_name": "FestivalMS",
+    "description": "Complete festival management system with multi-user support",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiBmaWxsPSIjMjU2M0VCIiByeD0iMjQiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+CjxwYXRoIGQ9Ik05IDEybDIgMiA0LTRtNiAyYTkgOSAwIDExLTE4IDAgOSA5IDAgMDE4IDB6Ii8+Cjwvc3ZnPgo8L3N2Zz4K",
+            "sizes": "192x192",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjMjU2M0VCIiByeD0iNjQiLz4KPHN2ZyB4PSIxMjgiIHk9IjEyOCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPgo8cGF0aCBkPSJNOSAxMmwyIDIgNC00bTYgMmE5IDkgMCAxMS0xOCAwIDkgOSAwIDAxMTggMHoiLz4KPC9zdmc+Cjwvc3ZnPgo=",
+            "sizes": "512x512",
+            "type": "image/svg+xml"
+        }
+    ],
+    "categories": ["productivity", "business"],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Admin Panel",
+            "url": "/?role=admin",
+            "description": "Quick access to admin panel"
+        },
+        {
+            "name": "Judge Panel",
+            "url": "/?role=judge", 
+            "description": "Quick access to judge panel"
+        }
+    ]
 }

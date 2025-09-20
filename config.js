@@ -1,28 +1,26 @@
-// Supabase client
-const SUPABASE_URL = 'https://aivaxrmytffpmkxgemom.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpdmF4cm15dGZmcG1reGdlbW9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0Mjk2ODEsImV4cCI6MjA3MjAwNTY4MX0.FS4OhSiG4Z5g_lp0NNOlHSBj7DZivsGkFoR-qdqYlGk';
+// Supabase client - single instance to avoid multiple client warnings
+if (!window.db) {
+    const SUPABASE_URL = 'https://nxxjjriywohylaybmbkk.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54eGpqcml5d29oeWxheWJtYmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MTIxODgsImV4cCI6MjA3MzM4ODE4OH0.N9yHU09APsKNZTtFaKCBGtoZGxAIIHil61niNv8aNZ0';
 
-window.db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
-// Session helpers
+// Session helpers (removed duplicate declarations)
 function currentUser() {
-  const raw = localStorage.getItem('af_user');
-  return raw ? JSON.parse(raw) : null;
+    return getUser();
 }
 
-function setUser(user) {
-  localStorage.setItem('af_user', JSON.stringify(user));
+// UI helpers (avoid redeclaration)
+if (typeof show === 'undefined') {
+    function show(el) { el.classList.remove('hidden'); }
 }
 
-function clearUser() {
-  localStorage.removeItem('af_user');
+if (typeof hide === 'undefined') {
+    function hide(el) { el.classList.add('hidden'); }
 }
-
-// UI helpers
-function show(el) { el.classList.remove('hidden'); }
-function hide(el) { el.classList.add('hidden'); }
 
 async function logout() {
-  clearUser();
-  location.reload();
+    clearUser();
+    location.reload();
 }
